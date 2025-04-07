@@ -5,6 +5,7 @@ class GameType(Enum):
     HD = "Hawk-Dove"
     SH = "Stag Hunt"
     RPS = "Rock-Paper-Scissors"
+    BS = "Battle of the Sexes"
     CUSTOM = "Custom"
 
 PAYOFF_MATRIX = {
@@ -36,5 +37,11 @@ PAYOFF_MATRIX = {
         ('S', 'R'): (-1, 1),
         ('S', 'P'): (1, -1),
         ('S', 'S'): (0, 0)
+    },
+    GameType.BS: {
+        ('C', 'H'): (2, 2),
+        ('C', 'U'): (0, 0),
+        ('F', 'H'): (5, 5),
+        ('F', 'U'): (15, -5)
     }
 }

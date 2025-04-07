@@ -54,7 +54,8 @@ def run_simulation():
         game_type=GameType.PD,
         strategies=strategies,
         config=config,
-        dynamic=LearningDynamic.replicator
+        dynamic=LearningDynamic.replicator,
+        agent_types=[]
     )
     
     plt.ion()
