@@ -38,6 +38,16 @@ def strategy_to_color(strategy):
     return color_map.get(strategy.name, '#000000')
 
 def run_simulation():
+    # Variables for detecting stability (probably should make these percent based)
+    stabilityRange = 30
+    stabilityIterations = 50  
+    strategyHistory = {
+    'Cooperate': [],
+    'Defect': [],
+    'TitForTat': []
+    }   
+    stabilityReached = False   
+    
     config = SpatialConfig(
         size=50,
         radius=1,
@@ -68,7 +78,7 @@ def run_simulation():
     ax.legend(handles=legend_elements, loc='upper right')
     img = None
 
-    for iteration in range(100):
+    for iteration in range(1000):
         sim.run_iteration()
         
         # vis
@@ -95,6 +105,22 @@ def run_simulation():
             'iteration': iteration,
             **strategy_counts
         })
+        
+        # Update history for each strategy
+        for strat in strategy_counts:
+            strategyHistory[strat].append(strategy_counts[strat])
+            if len(strategyHistory[strat]) > stabilityIterations:
+                strategyHistory[strat].pop(0)
+
+        # Check if all strategy counts are stable over the last iterations
+        if all(len(history) == stabilityIterations for history in strategyHistory.values()) and not stabilityReached:
+            is_stable = all(max(history) - min(history) <= stabilityRange for history in strategyHistory.values())
+            if is_stable:
+                print(f"Stability reached at iteration {iteration}")
+                stabilityReached = True
+        
+        
+        
 
     pd.DataFrame(metrics).to_csv(os.path.join(output_dir, "metrics.csv"), index=False)
     plt.ioff()
