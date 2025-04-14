@@ -1,4 +1,3 @@
-# main.py
 import os
 import datetime
 import pandas as pd
@@ -48,11 +47,19 @@ def run_simulation():
     }   
     stabilityReached = False   
     
+    # Example strategy distribution (must sum to 1)
+    strategy_distribution = {
+        'Cooperate': 0.0,
+        'Defect': 0.0,
+        'TitForTat': 1.0 
+    }
+    
     config = SpatialConfig(
         size=50,
         radius=1,
         mobility=0.0,
-        topology='toroidal'
+        topology='toroidal',
+        strategy_distribution=strategy_distribution  # Add the strategy distribution
     )
     
     strategies = [AlwaysCooperate, AlwaysDefect, TitForTat]
@@ -118,9 +125,6 @@ def run_simulation():
             if is_stable:
                 print(f"Stability reached at iteration {iteration}")
                 stabilityReached = True
-        
-        
-        
 
     pd.DataFrame(metrics).to_csv(os.path.join(output_dir, "metrics.csv"), index=False)
     plt.ioff()
