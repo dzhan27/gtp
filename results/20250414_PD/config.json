@@ -1,0 +1,12 @@
+{
+    "size": 50,
+    "radius": 1,
+    "mobility": 0.0,
+    "topology": "toroidal",
+    "strategy_distribution": {
+        "Cooperate": 0.4,
+        "Defect": 0.3,
+        "TitForTat": 0.3
+    },
+    "game_type": "PD"
+}

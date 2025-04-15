@@ -1,0 +1,12 @@
+{
+    "size": 50,
+    "radius": 1,
+    "mobility": 0.0,
+    "topology": "toroidal",
+    "strategy_distribution": {
+        "Hawk": 0.3333333333333333,
+        "Dove": 0.3333333333333333,
+        "Retaliator": 0.3333333333333333
+    },
+    "game_type": "HD"
+}

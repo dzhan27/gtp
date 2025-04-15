@@ -1,0 +1,21 @@
+Simulation Summary
+=================
+
+Date: 2025-04-14 21:27:04
+Game Type: Prisoner's Dilemma
+Grid Size: 50x50
+Interaction Radius: 1
+Mobility: 0.0
+
+Initial Strategy Distribution:
+  Cooperate: 0.40
+  Defect: 0.30
+  TitForTat: 0.30
+
+Final Strategy Counts:
+  Cooperate: 196
+  Defect: 1989
+  TitForTat: 315
+
+Stability Information:
+  Reached: False
