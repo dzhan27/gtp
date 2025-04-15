@@ -36,7 +36,7 @@ def strategy_to_color(strategy):
     }
     return color_map.get(strategy.name, '#000000')
 
-def run_simulation():
+def run_simulation(save_metrics=False):
     # Variables for detecting stability (probably should make these percent based)
     stabilityRange = 30
     stabilityIterations = 50  
@@ -49,9 +49,9 @@ def run_simulation():
     
     # Example strategy distribution (must sum to 1)
     strategy_distribution = {
-        'Cooperate': 0.0,
-        'Defect': 0.0,
-        'TitForTat': 1.0 
+        'Cooperate': 0.4,    # 40% Cooperate
+        'Defect': 0.3,       # 30% Defect
+        'TitForTat': 0.3     # 30% TitForTat
     }
     
     config = SpatialConfig(
@@ -64,7 +64,8 @@ def run_simulation():
     
     strategies = [AlwaysCooperate, AlwaysDefect, TitForTat]
     metrics = []
-    output_dir = create_output_dir()
+    if save_metrics:
+        output_dir = create_output_dir()
     
     # initialize sim
     sim = Simulation(
@@ -87,6 +88,10 @@ def run_simulation():
 
     for iteration in range(1000):
         sim.run_iteration()
+
+        if not plt.fignum_exists(fig.number):
+            print("Figure closed by user; stopping simulation.")
+            break
         
         # vis
         grid = np.array([[to_rgb(strategy_to_color(agent.strategy)) for agent in row] 
@@ -126,9 +131,12 @@ def run_simulation():
                 print(f"Stability reached at iteration {iteration}")
                 stabilityReached = True
 
-    pd.DataFrame(metrics).to_csv(os.path.join(output_dir, "metrics.csv"), index=False)
+    if save_metrics:
+        pd.DataFrame(metrics).to_csv(os.path.join(output_dir, "metrics.csv"), index=False)
+    
+    plt.close(fig)
     plt.ioff()
-    plt.show()
+    
     print(f"Simulation complete! Results saved to: {output_dir}")
 
 if __name__ == "__main__":
