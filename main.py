@@ -22,9 +22,10 @@ class Agent:
         self.prev_score = self.score
         self.score = 0
 
-def create_output_dir():
-    timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-    output_dir = os.path.join("results", f"sim_{timestamp}")
+def create_output_dir(game_type):
+    date_str = datetime.datetime.now().strftime("%Y%m%d")
+    dir_name = f"{date_str}_{game_type}"
+    output_dir = os.path.join("results", dir_name)
     os.makedirs(output_dir, exist_ok=True)
     return output_dir
 
@@ -47,11 +48,10 @@ def run_simulation(save_metrics=False):
     }   
     stabilityReached = False   
     
-    # Example strategy distribution (must sum to 1)
     strategy_distribution = {
-        'Cooperate': 0.4,    # 40% Cooperate
-        'Defect': 0.3,       # 30% Defect
-        'TitForTat': 0.3     # 30% TitForTat
+        'Cooperate': 0.5,
+        'Defect': 0.25,
+        'TitForTat': 0.25
     }
     
     config = SpatialConfig(
@@ -59,7 +59,7 @@ def run_simulation(save_metrics=False):
         radius=1,
         mobility=0.0,
         topology='toroidal',
-        strategy_distribution=strategy_distribution  # Add the strategy distribution
+        strategy_distribution=strategy_distribution
     )
     
     strategies = [AlwaysCooperate, AlwaysDefect, TitForTat]
@@ -137,7 +137,7 @@ def run_simulation(save_metrics=False):
     plt.close(fig)
     plt.ioff()
     
-    print(f"Simulation complete! Results saved to: {output_dir}")
+    print(f"Simulation complete!")
 
 if __name__ == "__main__":
     run_simulation()
