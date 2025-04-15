@@ -1,5 +1,5 @@
 import numpy as np
-from sim.game import GameType, PAYOFF_MATRIX
+from sim.game import GameType
 import random
 from sim.agent import Agent
 
@@ -16,17 +16,19 @@ class SpatialConfig:
         self.strategy_distribution = strategy_distribution
 
 class Simulation:
-    def __init__(self, game_type, strategies, config, dynamic, agent_types=[]):
+    def __init__(self, game_type, config, dynamic, agent_types=[]):
         self.game_type = game_type
+        self.game_config = game_type.value
         self.config = config
         self.dynamic = dynamic
         self.agent_types = agent_types
-        self.grid = self._init_grid(strategies)
-        self.payoffs = PAYOFF_MATRIX[game_type]
+        self.grid = self._init_grid()
+        self.payoffs = self.game_config.payoff_matrix
 
-    def _init_grid(self, strategies):
+    def _init_grid(self):
         grid = np.empty((self.config.size, self.config.size), dtype=object)
         total_cells = self.config.size ** 2
+        strategies = self.game_config.strategies
         
         if self.config.strategy_distribution:
             strategy_list = []

@@ -5,7 +5,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 from simulation import Simulation, SpatialConfig
 from sim.game import GameType
-from sim.strategies import Strategy, AlwaysCooperate, AlwaysDefect, TitForTat
 from sim.dynamics import LearningDynamic
 from matplotlib.colors import to_rgb
 from matplotlib.patches import Patch
@@ -29,60 +28,48 @@ def create_output_dir(game_type):
     os.makedirs(output_dir, exist_ok=True)
     return output_dir
 
-def strategy_to_color(strategy):
-    color_map = {
-        'Cooperate': '#2ecc71',
-        'Defect': '#e74c3c',
-        'TitForTat': '#3498db'
-    }
-    return color_map.get(strategy.name, '#000000')
+def strategy_to_color(strategy, game_config):
+    return game_config.strategy_colors.get(strategy.name, '#000000')
 
-def run_simulation(save_metrics=False):
+def run_simulation(game_type=GameType.HD, save_metrics=False):
+    game_config = game_type.value
+    legend_elements = [
+        Patch(facecolor=color, label=strat_name)
+        for strat_name, color in game_config.strategy_colors.items()
+    ]
+
     # Variables for detecting stability (probably should make these percent based)
     stabilityRange = 30
     stabilityIterations = 50  
-    strategyHistory = {
-    'Cooperate': [],
-    'Defect': [],
-    'TitForTat': []
-    }   
-    stabilityReached = False   
-    
-    strategy_distribution = {
-        'Cooperate': 0.5,
-        'Defect': 0.25,
-        'TitForTat': 0.25
-    }
+    strategyHistory = {strat.name: [] for strat in game_config.strategies}
+    stabilityReached = False
     
     config = SpatialConfig(
         size=50,
         radius=1,
         mobility=0.0,
         topology='toroidal',
-        strategy_distribution=strategy_distribution
+        strategy_distribution=game_config.default_distribution
     )
     
-    strategies = [AlwaysCooperate, AlwaysDefect, TitForTat]
     metrics = []
     if save_metrics:
         output_dir = create_output_dir()
+
+    legend_elements = [
+    Patch(facecolor=color, label=name)
+    for name, color in game_config.strategy_colors.items()
+    ]
     
     # initialize sim
     sim = Simulation(
-        game_type=GameType.PD,
-        strategies=strategies,
+        game_type=game_type,
         config=config,
-        dynamic=LearningDynamic.replicator,
-        agent_types=[]
+        dynamic=LearningDynamic.replicator
     )
     
     plt.ion()
     fig, ax = plt.subplots(figsize=(8, 8))
-    legend_elements = [
-        Patch(facecolor='#2ecc71', label='Cooperate'),
-        Patch(facecolor='#e74c3c', label='Defect'),
-        Patch(facecolor='#3498db', label='TitForTat')
-    ]
     ax.legend(handles=legend_elements, loc='upper right')
     img = None
 
@@ -94,7 +81,7 @@ def run_simulation(save_metrics=False):
             break
         
         # vis
-        grid = np.array([[to_rgb(strategy_to_color(agent.strategy)) for agent in row] 
+        grid = np.array([[to_rgb(strategy_to_color(agent.strategy, game_config)) for agent in row] 
                         for row in sim.grid])
         if img is None:
             img = ax.imshow(grid, interpolation='nearest')
@@ -105,11 +92,7 @@ def run_simulation(save_metrics=False):
         plt.pause(0.001)
         
         # collect data
-        strategy_counts = {
-            'Cooperate': 0,
-            'Defect': 0,
-            'TitForTat': 0
-        }
+        strategy_counts = {strat.name: 0 for strat in game_config.strategies}
         for row in sim.grid:
             for agent in row:
                 strategy_counts[agent.strategy.name] += 1
