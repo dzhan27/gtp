@@ -190,6 +190,8 @@ class SimulationGUI:
 
     def start_simulation(self):
         if not self.is_running:
+            if not hasattr(self, 'current_iteration') or self.should_stop:
+                self.current_iteration = 0
             self.is_running = True
             self.should_stop = False
             self.btn_run.config(state=tk.DISABLED)
@@ -230,6 +232,8 @@ class SimulationGUI:
         
     def initialize_simulation(self):
         game_config = self.current_game.value
+        if hasattr(self, 'iteration_text'):
+            self.iteration_text.remove()
         config = SpatialConfig(
             size=50,
             radius=1,
@@ -254,12 +258,14 @@ class SimulationGUI:
         
         # iteration counter
         self.iteration_text = self.ax.text(
-            0.95, 0.95, 'Iteration: 0',
+            0.95, 0.05,
+            'Iteration: 0',
             horizontalalignment='right',
-            verticalalignment='top',
+            verticalalignment='bottom',
             transform=self.ax.transAxes,
             color='white',
-            fontsize=12
+            fontsize=12,
+            bbox=dict(facecolor='black', alpha=0.5)
         )
         
     def update_grid(self):
