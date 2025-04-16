@@ -69,7 +69,7 @@ class SimulationGUI:
 
     def on_game_change(self, event):
         selected_game = self.game_selector.get()
-        self.current_game = next(gt for gt in GameType if gt.value.name == selected_game)
+        self.current_game = next(gt for gt in GameType if gt.name == selected_game)
         self.reset_simulation()
         
     def create_visualization(self):
