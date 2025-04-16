@@ -26,6 +26,7 @@ class GameConfig:
     valid_actions: List[str]
 
 class GameType(Enum):
+    
     PD = GameConfig(
         name="Prisoner's Dilemma",
         payoff_matrix={
