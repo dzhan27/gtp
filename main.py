@@ -76,13 +76,40 @@ class SimulationGUI:
         vis_frame = ttk.Frame(self.master)
         vis_frame.grid(row=0, column=1, sticky="nsew")
         
+        # chart frame (right)
+        viz_container = ttk.Frame(vis_frame)
+        viz_container.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
+        
+        # strategy map (left)
+        map_frame = ttk.Frame(viz_container)
+        map_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        
         self.fig = Figure(figsize=(6, 6))
         self.ax = self.fig.add_subplot(111)
-        self.canvas = FigureCanvasTkAgg(self.fig, master=vis_frame)
+        self.canvas = FigureCanvasTkAgg(self.fig, master=map_frame)
         self.canvas.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=True)
         
         self.img = self.ax.imshow(np.zeros((50, 50, 3)), interpolation='nearest')
         self.ax.axis('off')
+        
+        # strategy count chart (right)
+        chart_frame = ttk.Frame(viz_container)
+        chart_frame.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True)
+        
+        self.chart_fig = Figure(figsize=(6, 6))
+        self.chart_ax = self.chart_fig.add_subplot(111)
+        self.chart_canvas = FigureCanvasTkAgg(self.chart_fig, master=chart_frame)
+        self.chart_canvas.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=True)
+        
+        self.strategy_lines = {}
+        self.strategy_data = {}
+        
+        # chart setup
+        self.chart_ax.set_title("Strategy Proportions Over Time")
+        self.chart_ax.set_xlabel("Iteration")
+        self.chart_ax.set_ylabel("Proportion")
+        self.chart_ax.set_ylim(0, 1)
+        self.chart_ax.grid(True)
 
     def start_simulation(self):
         if not self.is_running:
@@ -109,7 +136,7 @@ class SimulationGUI:
         self.sim.run_iteration()
         self.current_iteration += 1
         
-        # Collect metrics if saving is enabled
+        # collect data if saving is enabled
         if self.save_data.get():
             game_config = self.current_game.value
             strategy_counts = {strat.name: 0 for strat in game_config.strategies}
@@ -146,10 +173,10 @@ class SimulationGUI:
         self.btn_run.config(state=tk.NORMAL)
         self.btn_stop.config(state=tk.DISABLED)
         
-        # Save data if enabled
+        # save data if enabled
         if self.save_data.get() and self.metrics:
             self.save_simulation_data()
-            self.metrics = []  # Clear metrics after saving
+            self.metrics = []  # clear metrics after saving
         
     def reset_simulation(self):
         self.stop_simulation()
@@ -198,6 +225,26 @@ class SimulationGUI:
             fontsize=12,
             bbox=dict(facecolor='black', alpha=0.5)
         )
+        
+        # initialize strategy data for the chart
+        self.strategy_data = {strat.name: [] for strat in game_config.strategies}
+        self.strategy_lines = {}
+        
+        # clear the chart
+        self.chart_ax.clear()
+        self.chart_ax.set_title("Strategy Proportions Over Time")
+        self.chart_ax.set_xlabel("Iteration")
+        self.chart_ax.set_ylabel("Proportion")
+        self.chart_ax.set_ylim(0, 1)
+        self.chart_ax.grid(True)
+        
+        # create lines for each strategy
+        for strat_name, color in game_config.strategy_colors.items():
+            line, = self.chart_ax.plot([], [], label=strat_name, color=color, linewidth=2)
+            self.strategy_lines[strat_name] = line
+        
+        self.chart_ax.legend(loc='upper right')
+        self.chart_canvas.draw()
 
     def update_grid(self):
         game_config = self.current_game.value
@@ -211,19 +258,44 @@ class SimulationGUI:
         
         self.img.set_data(grid)
         self.canvas.draw_idle()
+        
+        # update strategy count chart
+        if self.is_running:
+            # count strategies
+            strategy_counts = {strat.name: 0 for strat in game_config.strategies}
+            total_agents = 0
+            
+            for row in self.sim.grid:
+                for agent in row:
+                    strategy_counts[agent.strategy.name] += 1
+                    total_agents += 1
+            
+            # calculate proportions
+            for strat_name, count in strategy_counts.items():
+                proportion = count / total_agents if total_agents > 0 else 0
+                self.strategy_data[strat_name].append(proportion)
+                
+                # update the line data
+                self.strategy_lines[strat_name].set_data(
+                    range(len(self.strategy_data[strat_name])), 
+                    self.strategy_data[strat_name]
+                )
+            
+            self.chart_ax.set_xlim(0, max(10, len(self.strategy_data[list(self.strategy_data.keys())[0]])))
+            self.chart_canvas.draw_idle()
 
     def save_simulation_data(self):
-        # Create output directory with timestamp
+        # create output directory with timestamp
         date_str = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
         dir_name = f"{date_str}_{self.current_game.name}"
         self.output_dir = os.path.join("results", dir_name)
         os.makedirs(self.output_dir, exist_ok=True)
         
-        # Save metrics to CSV
+        # save metrics to csv
         metrics_df = pd.DataFrame(self.metrics)
         metrics_df.to_csv(os.path.join(self.output_dir, "metrics.csv"), index=False)
         
-        # Save configuration
+        # save configuration
         config = {
             'game_type': self.current_game.name,
             'grid_size': self.sim.grid.shape[0],
