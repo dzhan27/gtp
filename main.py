@@ -13,119 +13,7 @@ from tkinter import ttk
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
 from sim.game import GameType
-
-class Agent:
-    def __init__(self, strategy, position):
-        self.strategy = strategy
-        self.score = 0
-        self.history = []
-        self.position = position
-        self.prev_score = 0
-
-    def reset_score(self):
-        self.prev_score = self.score
-        self.score = 0
-
-def create_output_dir(game_type):
-    date_str = datetime.datetime.now().strftime("%Y%m%d")
-    dir_name = f"{date_str}_{game_type}"
-    output_dir = os.path.join("results", dir_name)
-    os.makedirs(output_dir, exist_ok=True)
-    return output_dir
-
-def strategy_to_color(strategy, game_config):
-    return game_config.strategy_colors.get(strategy.name, '#000000')
-
-def run_simulation(game_type=GameType.HD, save_metrics=False):
-    game_config = game_type.value
-    legend_elements = [
-        Patch(facecolor=color, label=strat_name)
-        for strat_name, color in game_config.strategy_colors.items()
-    ]
-
-    # Variables for detecting stability (probably should make these percent based)
-    stabilityRange = 30
-    stabilityIterations = 50  
-    strategyHistory = {strat.name: [] for strat in game_config.strategies}
-    stabilityReached = False
-    
-    config = SpatialConfig(
-        size=50,
-        radius=1,
-        mobility=0.0,
-        topology='toroidal',
-        strategy_distribution=game_config.default_distribution
-    )
-    
-    metrics = []
-    if save_metrics:
-        output_dir = create_output_dir()
-
-    legend_elements = [
-    Patch(facecolor=color, label=name)
-    for name, color in game_config.strategy_colors.items()
-    ]
-    
-    # initialize sim
-    sim = Simulation(
-        game_type=game_type,
-        config=config,
-        dynamic=LearningDynamic.replicator
-    )
-    
-    plt.ion()
-    fig, ax = plt.subplots(figsize=(8, 8))
-    ax.legend(handles=legend_elements, loc='upper right')
-    img = None
-
-    for iteration in range(1000):
-        sim.run_iteration()
-
-        if not plt.fignum_exists(fig.number):
-            print("Figure closed by user; stopping simulation.")
-            break
-        
-        # vis
-        grid = np.array([[to_rgb(strategy_to_color(agent.strategy, game_config)) for agent in row] 
-                        for row in sim.grid])
-        if img is None:
-            img = ax.imshow(grid, interpolation='nearest')
-        else:
-            img.set_data(grid)
-        
-        plt.title(f"Iteration {iteration}")
-        plt.pause(0.001)
-        
-        # collect data
-        strategy_counts = {strat.name: 0 for strat in game_config.strategies}
-        for row in sim.grid:
-            for agent in row:
-                strategy_counts[agent.strategy.name] += 1
-        metrics.append({
-            'iteration': iteration,
-            **strategy_counts
-        })
-        
-        # Update history for each strategy
-        for strat in strategy_counts:
-            strategyHistory[strat].append(strategy_counts[strat])
-            if len(strategyHistory[strat]) > stabilityIterations:
-                strategyHistory[strat].pop(0)
-
-        # Check if all strategy counts are stable over the last iterations
-        if all(len(history) == stabilityIterations for history in strategyHistory.values()) and not stabilityReached:
-            is_stable = all(max(history) - min(history) <= stabilityRange for history in strategyHistory.values())
-            if is_stable:
-                print(f"Stability reached at iteration {iteration}")
-                stabilityReached = True
-
-    if save_metrics:
-        pd.DataFrame(metrics).to_csv(os.path.join(output_dir, "metrics.csv"), index=False)
-    
-    plt.close(fig)
-    plt.ioff()
-    
-    print(f"Simulation complete!")
+import json
 
 class SimulationGUI:
     def __init__(self, master):
@@ -135,8 +23,16 @@ class SimulationGUI:
         # state
         self.is_running = False
         self.should_stop = False
-        self.save_data = tk.BooleanVar(value=True)
+        self.save_data = tk.BooleanVar(value=False)
         self.current_game = GameType.PD
+        self.metrics = []
+        self.output_dir = None
+        
+        # stability tracking
+        self.stability_range = 30
+        self.stability_iterations = 50
+        self.strategy_history = {}
+        self.stability_reached = False
         
         # layout
         self.create_controls()
@@ -213,6 +109,32 @@ class SimulationGUI:
         self.sim.run_iteration()
         self.current_iteration += 1
         
+        # Collect metrics if saving is enabled
+        if self.save_data.get():
+            game_config = self.current_game.value
+            strategy_counts = {strat.name: 0 for strat in game_config.strategies}
+            for row in self.sim.grid:
+                for agent in row:
+                    strategy_counts[agent.strategy.name] += 1
+            
+            self.metrics.append({
+                'iteration': self.current_iteration,
+                **strategy_counts
+            })
+            
+            # update strategy history for stability detection
+            for strat in strategy_counts:
+                self.strategy_history[strat].append(strategy_counts[strat])
+                if len(self.strategy_history[strat]) > self.stability_iterations:
+                    self.strategy_history[strat].pop(0)
+            
+            # check for stability
+            if all(len(history) == self.stability_iterations for history in self.strategy_history.values()) and not self.stability_reached:
+                is_stable = all(max(history) - min(history) <= self.stability_range for history in self.strategy_history.values())
+                if is_stable:
+                    print(f"Stability reached at iteration {self.current_iteration}")
+                    self.stability_reached = True
+        
         self.update_grid()
         self.iteration_text.set_text(f'Iteration: {self.current_iteration}')
         
@@ -223,6 +145,11 @@ class SimulationGUI:
         self.is_running = False
         self.btn_run.config(state=tk.NORMAL)
         self.btn_stop.config(state=tk.DISABLED)
+        
+        # Save data if enabled
+        if self.save_data.get() and self.metrics:
+            self.save_simulation_data()
+            self.metrics = []  # Clear metrics after saving
         
     def reset_simulation(self):
         self.stop_simulation()
@@ -250,6 +177,10 @@ class SimulationGUI:
 
         # legend
         game_config = self.current_game.value
+        self.strategy_history = {strat.name: [] for strat in game_config.strategies}
+        self.stability_reached = False
+
+        # create legend
         legend_elements = [
             Patch(facecolor=color, label=name) 
             for name, color in game_config.strategy_colors.items()
@@ -267,7 +198,7 @@ class SimulationGUI:
             fontsize=12,
             bbox=dict(facecolor='black', alpha=0.5)
         )
-        
+
     def update_grid(self):
         game_config = self.current_game.value
         
@@ -280,6 +211,33 @@ class SimulationGUI:
         
         self.img.set_data(grid)
         self.canvas.draw_idle()
+
+    def save_simulation_data(self):
+        # Create output directory with timestamp
+        date_str = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+        dir_name = f"{date_str}_{self.current_game.name}"
+        self.output_dir = os.path.join("results", dir_name)
+        os.makedirs(self.output_dir, exist_ok=True)
+        
+        # Save metrics to CSV
+        metrics_df = pd.DataFrame(self.metrics)
+        metrics_df.to_csv(os.path.join(self.output_dir, "metrics.csv"), index=False)
+        
+        # Save configuration
+        config = {
+            'game_type': self.current_game.name,
+            'grid_size': self.sim.grid.shape[0],
+            'radius': self.sim.config.radius,
+            'mobility': self.sim.config.mobility,
+            'topology': self.sim.config.topology,
+            'total_iterations': self.current_iteration,
+            'strategy_distribution': self.sim.config.strategy_distribution
+        }
+        
+        with open(os.path.join(self.output_dir, "config.json"), 'w') as f:
+            json.dump(config, f, indent=4)
+            
+        print(f"Simulation data saved to {self.output_dir}")
 
     def on_closing(self):
         self.stop_simulation()
