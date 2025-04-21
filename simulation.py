@@ -76,7 +76,7 @@ class Simulation:
         while self.config.radius < 1:
             nx = random.randint(0, self.config.size-1)
             ny = random.randint(0, self.config.size-1)
-            if nx != x and ny != y and self.grid[nx, ny].type is not None and self.grid[nx, ny].type != agent.type:
+            if nx != x and ny != y and (self.grid[nx, ny].type is None or self.grid[nx, ny].type != agent.type):
                 return [self.grid[nx, ny]]
         for dx in range(-self.config.radius, self.config.radius+1):
             for dy in range(-self.config.radius, self.config.radius+1):
