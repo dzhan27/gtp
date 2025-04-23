@@ -13,8 +13,8 @@ class Strategy:
         self.name = name
         self.actor = actor
         
-    def act(self, history):
-        return self.actor(history)
+    def act(self, history, type):
+        return self.actor(history, type)
 
 @dataclass
 class GameConfig:
@@ -24,6 +24,7 @@ class GameConfig:
     strategy_colors: Dict[str, str]
     default_distribution: Dict[str, float]
     valid_actions: List[str]
+    agent_types: List[str]
 
 class GameType(Enum):
     
@@ -36,9 +37,9 @@ class GameType(Enum):
             ('D', 'D'): (1, 1)
         },
         strategies=[
-            Strategy("Cooperate", lambda _: 'C'),
-            Strategy("Defect", lambda _: 'D'),
-            Strategy("TitForTat", lambda h: h[-1][1] if h else 'C')
+            Strategy("Cooperate", lambda h, t: 'C'),
+            Strategy("Defect", lambda h, t: 'D'),
+            Strategy("TitForTat", lambda h, t: h[-1][1] if h else 'C')
         ],
         strategy_colors={
             'Cooperate': '#2ecc71',
@@ -46,7 +47,8 @@ class GameType(Enum):
             'TitForTat': '#3498db'
         },
         default_distribution={'Cooperate': 0.5, 'Defect': 0.25, 'TitForTat': 0.25},
-        valid_actions=['C', 'D']
+        valid_actions=['C', 'D'],
+        agent_types=None
     )
 
     SH = GameConfig(
@@ -58,9 +60,9 @@ class GameType(Enum):
             ('H', 'H'): (3, 3)
         },
         strategies=[
-            Strategy("Always Stag", lambda _: 'S'),
-            Strategy("Always Hare", lambda _: 'H'),
-            Strategy("Cautious", lambda h: 'S' if h.count('S') > h.count('H') else 'H')
+            Strategy("Always Stag", lambda h, t: 'S'),
+            Strategy("Always Hare", lambda h, t: 'H'),
+            Strategy("Cautious", lambda h, t: 'S' if h[0].count('S') > h[0].count('H') else 'H')
         ],
         strategy_colors={
             'Always Stag': '#1abc9c',
@@ -68,7 +70,8 @@ class GameType(Enum):
             'Cautious': '#9b59b6'
         },
         default_distribution={'Always Stag': 0.4, 'Always Hare': 0.4, 'Cautious': 0.2},
-        valid_actions=['S', 'H']
+        valid_actions=['S', 'H'],
+        agent_types=None
     )
 
     HD = GameConfig(
@@ -80,9 +83,9 @@ class GameType(Enum):
             ('D', 'D'): (2, 2)
         },
         strategies=[
-            Strategy("Always Hawk", lambda _: 'H'),
-            Strategy("Always Dove", lambda _: 'D'),
-            Strategy("Random", lambda h: 'H' if random.random() < 0.5 else 'D')
+            Strategy("Always Hawk", lambda h, t: 'H'),
+            Strategy("Always Dove", lambda h, t: 'D'),
+            Strategy("Random", lambda h, t: 'H' if random.random() < 0.5 else 'D')
         ],
         strategy_colors={
             'Always Hawk': '#f1c40f',
@@ -90,7 +93,33 @@ class GameType(Enum):
             'Random': '#0e44ad'
         },
         default_distribution={'Always Hawk': 0.4, 'Always Dove': 0.4, 'Random': 0.2},
-        valid_actions=['H', 'D']
+        valid_actions=['H', 'D'],
+        agent_types=None
+    )
+
+    BS = GameConfig(
+        name="Battle of Sexes",
+        payoff_matrix={
+            ('C', 'H'): (2, 2),
+            ('C', 'U'): (0, 0),
+            ('F', 'H'): (5, 5),
+            ('F', 'U'): (15, -5),
+            ('H', 'C'): (2, 2),
+            ('U', 'C'): (0, 0),
+            ('H', 'F'): (5, 5),
+            ('U', 'F'): (-5, 15)
+        },
+        strategies=[
+            Strategy("Always Cooperative", lambda h, t: 'C' if t == "Female" else 'H'),
+            Strategy("Always Uncooperative", lambda h, t: 'F' if t == "Female" else 'U')
+        ],
+        strategy_colors={
+            "Always Cooperative": '#f1c40f',
+            "Always Uncooperative": '#9b59b6',
+        },
+        default_distribution={'Always Cooperative': 0.5, 'Always Uncooperative': 0.5},
+        valid_actions=['C', 'H', 'F', 'U'],
+        agent_types=["Male", "Female"]
     )
 
     def __str__(self):

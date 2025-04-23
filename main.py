@@ -202,6 +202,14 @@ class SimulationGUI:
             dynamic=LearningDynamic.replicator
         )
 
+        if game_config.agent_types != None:
+            self.sim = Simulation(
+                game_type=self.current_game,
+                config=config,
+                dynamic=LearningDynamic.replicator,
+                agent_types=game_config.agent_types
+            )
+
         # legend
         game_config = self.current_game.value
         self.strategy_history = {strat.name: [] for strat in game_config.strategies}

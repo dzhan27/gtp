@@ -47,8 +47,7 @@ class Simulation:
                 for y in range(self.config.size):
                     if len(self.agent_types) > 1:
                         type = self.agent_types[idx % len(self.agent_types)]
-                        available_strategies = [s for s in strategies if s.type == type]
-                        grid[x, y] = Agent(random.choice(available_strategies), (x, y), type)
+                        grid[x, y] = Agent(strategy_list[idx], (x, y), type)
                     else:
                         grid[x, y] = Agent(strategy_list[idx], (x, y))
                     idx += 1
@@ -61,8 +60,7 @@ class Simulation:
                         type = self.agent_types[type_count % len(self.agent_types)]
                         available_strategies = []
                         for strategy in strategies:
-                            if strategy.type == type:
-                                available_strategies.append(strategy)
+                            available_strategies.append(strategy)
                         grid[x, y] = Agent(random.choice(available_strategies), (x, y), type)
                         type_count = type_count + 1
                     else:
@@ -89,8 +87,8 @@ class Simulation:
         return neighbors
 
     def _interact(self, a1, a2):
-        a1_action = a1.strategy.act(a1.history)
-        a2_action = a2.strategy.act(a2.history)
+        a1_action = a1.strategy.act(a1.history, a1.type)
+        a2_action = a2.strategy.act(a2.history, a2.type)
         payoff = self.payoffs.get((a1_action, a2_action), (0,0))
         a1.score += payoff[0]
         a2.score += payoff[1]
