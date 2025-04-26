@@ -61,11 +61,23 @@ class SimulationGUI:
         self.btn_reset = ttk.Button(control_frame, text="Reset", command=self.reset_simulation)
         self.btn_reset.pack(pady=5, fill=tk.X)
 
+        ttk.Label(control_frame, text="Learning Dynamic:").pack(pady=5)
+        self.dynamic_selector = ttk.Combobox(
+            control_frame, 
+            values=['replicator', 'fermi', 'moran', 'random_copy', 'aspiration']
+        )
+        self.dynamic_selector.current(0)
+        self.dynamic_selector.pack(pady=5)
+
         # save data
         ttk.Checkbutton(control_frame, text="Save Metrics", 
                        variable=self.save_data).pack(pady=5)
         
         self.game_selector.bind('<<ComboboxSelected>>', self.on_game_change)
+        self.dynamic_selector.bind('<<ComboboxSelected>>', self.on_dynamic_change)
+
+    def on_dynamic_change(self, event):
+        self.reset_simulation()
 
     def on_game_change(self, event):
         selected_game = self.game_selector.get()
@@ -196,19 +208,27 @@ class SimulationGUI:
             strategy_distribution=game_config.default_distribution
         )
         
-        self.sim = Simulation(
-            game_type=self.current_game,
-            config=config,
-            dynamic=LearningDynamic.replicator
-        )
-
-        if game_config.agent_types != None:
+        selected_dynamic = getattr(LearningDynamic, self.dynamic_selector.get())
+        game_config = self.current_game.value
+        
+        if game_config.agent_types is not None:
             self.sim = Simulation(
                 game_type=self.current_game,
                 config=config,
-                dynamic=LearningDynamic.replicator,
+                dynamic=selected_dynamic,
                 agent_types=game_config.agent_types
             )
+        else:
+            self.sim = Simulation(
+                game_type=self.current_game,
+                config=config,
+                dynamic=selected_dynamic
+            )
+
+        if hasattr(self, 'sim'):
+            for agent in self.sim.grid.flatten():
+                agent.score = 0
+                agent.prev_score = 0
 
         # legend
         game_config = self.current_game.value
