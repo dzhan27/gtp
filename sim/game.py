@@ -62,7 +62,7 @@ class GameType(Enum):
         strategies=[
             Strategy("Always Stag", lambda h, t: 'S'),
             Strategy("Always Hare", lambda h, t: 'H'),
-            Strategy("Cautious", lambda h, t: 'S' if h[0].count('S') > h[0].count('H') else 'H')
+            Strategy("Cautious", lambda h, t: 'S' if h.count('S') > h.count('H') else 'H')
         ],
         strategy_colors={
             'Always Stag': '#1abc9c',
