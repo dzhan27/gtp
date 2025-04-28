@@ -23,12 +23,12 @@ class LearningDynamic:
     # probability of choosing strategy proportional to fitness
     def moran(agent, neighbors):
         candidate_pool = [agent] + neighbors
-        total_payoff = sum(c.score for c in candidate_pool)
+        total_payoff = sum(max(c.score, 0) for c in candidate_pool)
         
         if total_payoff <= 0:
             chosen = random.choice(candidate_pool)
         else:
-            probabilities = [c.score/total_payoff for c in candidate_pool]
+            probabilities = [max(c.score/total_payoff, 0) for c in candidate_pool]
             chosen = np.random.choice(candidate_pool, p=probabilities)
         return chosen.strategy
     

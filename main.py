@@ -49,6 +49,7 @@ class SimulationGUI:
                                         values=[gt.name for gt in GameType])
         self.game_selector.current(0)
         self.game_selector.pack(pady=5)
+
         
         # buttons
         self.btn_run = ttk.Button(control_frame, text="Run", command=self.start_simulation)
@@ -69,6 +70,16 @@ class SimulationGUI:
         self.dynamic_selector.current(0)
         self.dynamic_selector.pack(pady=5)
 
+        # dist
+        self.dist_frame = ttk.LabelFrame(control_frame, text="Strategy Distribution (must sum to 100)", padding=10)
+        self.dist_frame.pack(pady=10, fill=tk.X)
+        self.strategy_entries = {}
+        self.btn_apply_dist = ttk.Button(self.dist_frame, text="Apply", 
+                                    command=self.apply_custom_distribution)
+        self.btn_apply_dist.pack(pady=5, fill=tk.X)
+
+        self.update_strategy_distribution_controls()
+
         # save data
         ttk.Checkbutton(control_frame, text="Save Metrics", 
                        variable=self.save_data).pack(pady=5)
@@ -79,9 +90,56 @@ class SimulationGUI:
     def on_dynamic_change(self, event):
         self.reset_simulation()
 
+    def update_strategy_distribution_controls(self):
+        for widget in self.dist_frame.winfo_children():
+            if widget not in [self.btn_apply_dist]:
+                widget.destroy()
+        self.strategy_entries.clear()
+        
+        game_config = self.current_game.value
+        strategies = game_config.strategies
+        default_dist = game_config.default_distribution
+        
+        for strat in strategies:
+            frame = ttk.Frame(self.dist_frame)
+            frame.pack(fill=tk.X, pady=2)
+            
+            label = ttk.Label(frame, text=f"{strat.name}:", width=20)
+            label.pack(side=tk.LEFT)
+            
+            entry = ttk.Entry(frame, width=8)
+            entry.insert(0, str(int(default_dist.get(strat.name, 0)*100)))
+            entry.pack(side=tk.RIGHT)
+            
+            self.strategy_entries[strat.name] = entry
+
+    def apply_custom_distribution(self):
+        try:
+            dist = {}
+            total = 0
+            game_config = self.current_game.value
+            
+            for strat_name, entry in self.strategy_entries.items():
+                value = entry.get().strip()
+                percentage = float(value) if value else 0.0
+                if percentage < 0 or percentage > 100:
+                    raise ValueError("Percentages must be between 0-100")
+                dist[strat_name] = percentage / 100
+                total += percentage
+                
+            if abs(total - 100) > 0.01:
+                raise ValueError(f"Total must be 100% (current: {total:.2f}%)")
+                
+            self.custom_distribution = dist
+            self.reset_simulation()
+            
+        except ValueError as e:
+            pass
+
     def on_game_change(self, event):
         selected_game = self.game_selector.get()
         self.current_game = next(gt for gt in GameType if gt.name == selected_game)
+        self.update_strategy_distribution_controls()
         self.reset_simulation()
         
     def create_visualization(self):
@@ -200,12 +258,16 @@ class SimulationGUI:
         game_config = self.current_game.value
         if hasattr(self, 'iteration_text'):
             self.iteration_text.remove()
+
+        strategy_dist = getattr(self, 'custom_distribution', None)
+        if strategy_dist is None:
+            strategy_dist = game_config.default_distribution
         config = SpatialConfig(
             size=50,
             radius=1,
             mobility=0.0,
             topology='toroidal',
-            strategy_distribution=game_config.default_distribution
+            strategy_distribution=strategy_dist
         )
         
         selected_dynamic = getattr(LearningDynamic, self.dynamic_selector.get())
