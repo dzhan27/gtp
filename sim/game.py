@@ -121,6 +121,38 @@ class GameType(Enum):
         valid_actions=['C', 'H', 'F', 'U'],
         agent_types=["Male", "Female"]
     )
+    
+    RPS = GameConfig(
+        name="Battle of Sexes",
+        payoff_matrix={
+            ('R', 'R'): (0, 0),
+            ('P', 'P'): (0, 0),
+            ('S', 'S'): (0, 0),
+            ('S', 'P'): (-1, 1),
+            ('P', 'R'): (-1, 1),
+            ('R', 'S'): (-1, 1),
+            ('P', 'S'): (1, -1),
+            ('S', 'R'): (1, -1),
+            ('R', 'P'): (1, -1),
+        },
+        strategies=[
+            Strategy("Always Rock", lambda h, t: 'R'),
+            Strategy("Always Paper", lambda h, t: 'P'),
+            Strategy("Always Scissor", lambda h, t: 'S'),
+            Strategy("Always Random",  lambda h, t: 'R' if (r := random.random()) < 1/3 else 'P' if r < 2/3 else 'S')
+        ],
+        strategy_colors={
+            "Always Rock": '#f1c40f',
+            "Always Paper": '#9b59b6',
+            "Always Scissor": '#1abc9c',
+            "Always Random": '#0e44ad'
+            
+        },
+        #default_distribution={"Always Rock": 0.25, "Always Paper": 0.25,"Always Scissor": 0.25},
+        default_distribution={"Always Rock": 0.25, "Always Paper": 0.25,"Always Scissor": 0.25,"Always Random": 0.25 },
+        valid_actions=['R', 'P', 'S'],
+        agent_types=None
+    )
 
     def __str__(self):
         return self.value.name
