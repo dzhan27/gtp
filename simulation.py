@@ -44,17 +44,19 @@ class Simulation:
             # place strategies
             idx = 0
             for x in range(self.config.size):
+                type_count = x
                 for y in range(self.config.size):
                     if len(self.agent_types) > 1:
-                        type = self.agent_types[idx % len(self.agent_types)]
+                        type = self.agent_types[type_count % len(self.agent_types)]
                         grid[x, y] = Agent(strategy_list[idx], (x, y), type)
                     else:
                         grid[x, y] = Agent(strategy_list[idx], (x, y))
                     idx += 1
+                    type_count += 1
         else:
             # randomly distribute strategies
-            type_count = 0
             for x in range(self.config.size):
+                type_count = x
                 for y in range(self.config.size):
                     if len(self.agent_types) > 1:
                         type = self.agent_types[type_count % len(self.agent_types)]

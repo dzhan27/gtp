@@ -49,6 +49,7 @@ class SimulationGUI:
                                         values=[gt.name for gt in GameType])
         self.game_selector.current(0)
         self.game_selector.pack(pady=5)
+
         
         # buttons
         self.btn_run = ttk.Button(control_frame, text="Run", command=self.start_simulation)
@@ -69,9 +70,61 @@ class SimulationGUI:
         self.dynamic_selector.current(0)
         self.dynamic_selector.pack(pady=5)
 
+        # radius
+        self.radius_frame = ttk.LabelFrame(control_frame, text="Interaction Radius", padding=10)
+        self.radius_frame.pack(pady=10, fill=tk.X)
+        radius_row = ttk.Frame(self.radius_frame)
+        radius_row.pack(fill=tk.X)
+        
+        ttk.Label(radius_row, text="Radius:").pack(side=tk.LEFT)
+        self.radius_entry = ttk.Entry(radius_row, width=8)
+        self.radius_entry.insert(0, "1")
+        self.radius_entry.pack(side=tk.LEFT, padx=5)
+        
+        self.radius_status = ttk.Label(radius_row, text="", foreground="green")
+        self.radius_status.pack(side=tk.LEFT)
+        
+        self.btn_apply_radius = ttk.Button(self.radius_frame, text="Apply Radius", 
+                                        command=self.apply_radius)
+        self.btn_apply_radius.pack(pady=5, fill=tk.X)
+
+        # dist
+        self.dist_frame = ttk.LabelFrame(control_frame, text="Strategy Distribution (must sum to 100)", padding=10)
+        self.dist_frame.pack(pady=10, fill=tk.X)
+        self.strategy_entries = {}
+        self.btn_apply_dist = ttk.Button(self.dist_frame, text="Apply", 
+                                    command=self.apply_custom_distribution)
+        self.btn_apply_dist.pack(pady=5, fill=tk.X)
+
+        self.update_strategy_distribution_controls()
+
+        # payoff
+        self.payoff_frame = ttk.LabelFrame(control_frame, text="Payoff Matrix", padding=10)
+        self.payoff_frame.pack(pady=10, fill=tk.X)
+        
+        self.payoff_entries = {}
+        self.payoff_status = ttk.Label(self.payoff_frame, text="", foreground="green")
+        self.payoff_status.pack(pady=5)
+        
+        self.btn_apply_payoff = ttk.Button(self.payoff_frame, text="Apply Payoffs", 
+                                        command=self.apply_custom_payoffs)
+        self.btn_apply_payoff.pack(pady=5, fill=tk.X)
+        
+        self.update_payoff_controls()
+
         # save data
         ttk.Checkbutton(control_frame, text="Save Metrics", 
                        variable=self.save_data).pack(pady=5)
+        self.save_status_label = ttk.Label(control_frame, text="", foreground="green")
+        self.save_status_label.pack(pady=5)
+        self.save_status_label = ttk.Label(
+            control_frame, 
+            text="", 
+            foreground="green",
+            wraplength=300,
+            anchor=tk.W
+        )
+        self.save_status_label.pack(pady=5, fill=tk.X)
         
         self.game_selector.bind('<<ComboboxSelected>>', self.on_game_change)
         self.dynamic_selector.bind('<<ComboboxSelected>>', self.on_dynamic_change)
@@ -79,9 +132,133 @@ class SimulationGUI:
     def on_dynamic_change(self, event):
         self.reset_simulation()
 
+    def apply_radius(self):
+        try:
+            new_radius = int(self.radius_entry.get())
+            if new_radius < 0:
+                raise ValueError("Radius cannot be negative")
+                
+            self.current_radius = new_radius
+            self.radius_status.config(text="Applied!", foreground="green")
+            self.master.after(2000, lambda: self.radius_status.config(text=""))
+            self.reset_simulation()
+            
+        except ValueError as e:
+            self.radius_status.config(text=str(e), foreground="red")
+            self.master.after(3000, lambda: self.radius_status.config(text=""))
+
+    def update_payoff_controls(self):
+        for widget in self.payoff_frame.winfo_children():
+            if widget not in [self.btn_apply_payoff, self.payoff_status]:
+                widget.destroy()
+        self.payoff_entries.clear()
+        
+        if not hasattr(self, 'current_game'):
+            return
+        
+        game_config = self.current_game.value
+        actions = game_config.valid_actions
+        
+        matrix_frame = ttk.Frame(self.payoff_frame)
+        matrix_frame.pack(fill=tk.X)
+        
+        ttk.Label(matrix_frame, text="Row\\Col").grid(row=0, column=0)
+        for col_idx, col_action in enumerate(actions, 1):
+            ttk.Label(matrix_frame, text=col_action).grid(row=0, column=col_idx)
+        
+        for row_idx, row_action in enumerate(actions, 1):
+            ttk.Label(matrix_frame, text=row_action).grid(row=row_idx, column=0)
+            
+            for col_idx, col_action in enumerate(actions, 1):
+                cell_frame = ttk.Frame(matrix_frame)
+                cell_frame.grid(row=row_idx, column=col_idx, padx=2, pady=2)
+                
+                key = (row_action, col_action)
+                default_p1, default_p2 = self.current_game.value.payoff_matrix.get(key, (0, 0))
+                
+                p1_entry = ttk.Entry(cell_frame, width=3)
+                p1_entry.insert(0, str(default_p1))
+                p1_entry.pack(side=tk.LEFT)
+                p1_entry.bind("<KeyRelease>", lambda e: self.payoff_status.config(text=""))
+                
+                ttk.Label(cell_frame, text=",").pack(side=tk.LEFT)
+                
+                p2_entry = ttk.Entry(cell_frame, width=3)
+                p2_entry.insert(0, str(default_p2))
+                p2_entry.pack(side=tk.LEFT)
+                p2_entry.bind("<KeyRelease>", lambda e: self.payoff_status.config(text=""))
+                
+                self.payoff_entries[key] = (p1_entry, p2_entry)
+
+    def apply_custom_payoffs(self):
+        try:
+            new_matrix = {}
+            for key, (entry_p1, entry_p2) in self.payoff_entries.items():
+                p1 = int(entry_p1.get())
+                p2 = int(entry_p2.get())
+                new_matrix[key] = (p1, p2)
+            
+            # Update current game's payoff matrix
+            self.current_game.value.payoff_matrix = new_matrix
+            self.payoff_status.config(text="Applied!", foreground="green")
+            
+            # Reset simulation with new payoffs
+            self.reset_simulation()
+            
+        except ValueError:
+            self.payoff_status.config(text="Invalid input! Use integers.", foreground="red")
+
+    def update_strategy_distribution_controls(self):
+        for widget in self.dist_frame.winfo_children():
+            if widget not in [self.btn_apply_dist]:
+                widget.destroy()
+        self.strategy_entries.clear()
+        
+        game_config = self.current_game.value
+        strategies = game_config.strategies
+        default_dist = game_config.default_distribution
+        
+        for strat in strategies:
+            frame = ttk.Frame(self.dist_frame)
+            frame.pack(fill=tk.X, pady=2)
+            
+            label = ttk.Label(frame, text=f"{strat.name}:", width=20)
+            label.pack(side=tk.LEFT)
+            
+            entry = ttk.Entry(frame, width=8)
+            entry.insert(0, str(int(default_dist.get(strat.name, 0)*100)))
+            entry.pack(side=tk.RIGHT)
+            
+            self.strategy_entries[strat.name] = entry
+
+    def apply_custom_distribution(self):
+        try:
+            dist = {}
+            total = 0
+            game_config = self.current_game.value
+            
+            for strat_name, entry in self.strategy_entries.items():
+                value = entry.get().strip()
+                percentage = float(value) if value else 0.0
+                if percentage < 0 or percentage > 100:
+                    raise ValueError("Percentages must be between 0-100")
+                dist[strat_name] = percentage / 100
+                total += percentage
+                
+            if abs(total - 100) > 0.01:
+                raise ValueError(f"Total must be 100% (current: {total:.2f}%)")
+                
+            self.custom_distribution = dist
+            self.reset_simulation()
+            
+        except ValueError as e:
+            pass
+
     def on_game_change(self, event):
         selected_game = self.game_selector.get()
         self.current_game = next(gt for gt in GameType if gt.name == selected_game)
+        self.update_strategy_distribution_controls()
+        self.update_payoff_controls()
         self.reset_simulation()
         
     def create_visualization(self):
@@ -200,12 +377,16 @@ class SimulationGUI:
         game_config = self.current_game.value
         if hasattr(self, 'iteration_text'):
             self.iteration_text.remove()
+
+        strategy_dist = getattr(self, 'custom_distribution', None)
+        if strategy_dist is None:
+            strategy_dist = game_config.default_distribution
         config = SpatialConfig(
             size=50,
-            radius=1,
+            radius=getattr(self, 'current_radius', 1),
             mobility=0.0,
             topology='toroidal',
-            strategy_distribution=game_config.default_distribution
+            strategy_distribution=strategy_dist
         )
         
         selected_dynamic = getattr(LearningDynamic, self.dynamic_selector.get())
@@ -336,6 +517,11 @@ class SimulationGUI:
         
         with open(os.path.join(self.output_dir, "config.json"), 'w') as f:
             json.dump(config, f, indent=4)
+
+        save_text = f"Metrics saved to: {self.output_dir}"
+        self.save_status_label.config(text=save_text, foreground="green")
+        
+        self.master.after(5000, lambda: self.save_status_label.config(text=""))
             
         print(f"Simulation data saved to {self.output_dir}")
 
