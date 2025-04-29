@@ -70,6 +70,24 @@ class SimulationGUI:
         self.dynamic_selector.current(0)
         self.dynamic_selector.pack(pady=5)
 
+        # radius
+        self.radius_frame = ttk.LabelFrame(control_frame, text="Interaction Radius", padding=10)
+        self.radius_frame.pack(pady=10, fill=tk.X)
+        radius_row = ttk.Frame(self.radius_frame)
+        radius_row.pack(fill=tk.X)
+        
+        ttk.Label(radius_row, text="Radius:").pack(side=tk.LEFT)
+        self.radius_entry = ttk.Entry(radius_row, width=8)
+        self.radius_entry.insert(0, "1")
+        self.radius_entry.pack(side=tk.LEFT, padx=5)
+        
+        self.radius_status = ttk.Label(radius_row, text="", foreground="green")
+        self.radius_status.pack(side=tk.LEFT)
+        
+        self.btn_apply_radius = ttk.Button(self.radius_frame, text="Apply Radius", 
+                                        command=self.apply_radius)
+        self.btn_apply_radius.pack(pady=5, fill=tk.X)
+
         # dist
         self.dist_frame = ttk.LabelFrame(control_frame, text="Strategy Distribution (must sum to 100)", padding=10)
         self.dist_frame.pack(pady=10, fill=tk.X)
@@ -113,6 +131,21 @@ class SimulationGUI:
 
     def on_dynamic_change(self, event):
         self.reset_simulation()
+
+    def apply_radius(self):
+        try:
+            new_radius = int(self.radius_entry.get())
+            if new_radius < 0:
+                raise ValueError("Radius cannot be negative")
+                
+            self.current_radius = new_radius
+            self.radius_status.config(text="Applied!", foreground="green")
+            self.master.after(2000, lambda: self.radius_status.config(text=""))
+            self.reset_simulation()
+            
+        except ValueError as e:
+            self.radius_status.config(text=str(e), foreground="red")
+            self.master.after(3000, lambda: self.radius_status.config(text=""))
 
     def update_payoff_controls(self):
         for widget in self.payoff_frame.winfo_children():
@@ -350,7 +383,7 @@ class SimulationGUI:
             strategy_dist = game_config.default_distribution
         config = SpatialConfig(
             size=50,
-            radius=1,
+            radius=getattr(self, 'current_radius', 1),
             mobility=0.0,
             topology='toroidal',
             strategy_distribution=strategy_dist
