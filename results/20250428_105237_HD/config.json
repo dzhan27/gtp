@@ -1,0 +1,13 @@
+{
+    "game_type": "HD",
+    "grid_size": 50,
+    "radius": 1,
+    "mobility": 0.0,
+    "topology": "toroidal",
+    "total_iterations": 35,
+    "strategy_distribution": {
+        "Always Hawk": 0.4,
+        "Always Dove": 0.4,
+        "Random": 0.2
+    }
+}

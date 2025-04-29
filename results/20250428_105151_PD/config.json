@@ -1,0 +1,13 @@
+{
+    "game_type": "PD",
+    "grid_size": 50,
+    "radius": 1,
+    "mobility": 0.0,
+    "topology": "toroidal",
+    "total_iterations": 40,
+    "strategy_distribution": {
+        "Cooperate": 0.5,
+        "Defect": 0.25,
+        "TitForTat": 0.25
+    }
+}
