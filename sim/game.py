@@ -123,7 +123,7 @@ class GameType(Enum):
     )
     
     RPS = GameConfig(
-        name="Battle of Sexes",
+        name="Rock Paper Scissors",
         payoff_matrix={
             ('R', 'R'): (0, 0),
             ('P', 'P'): (0, 0),
