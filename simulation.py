@@ -76,16 +76,18 @@ class Simulation:
         while self.config.radius < 1:
             nx = random.randint(0, self.config.size-1)
             ny = random.randint(0, self.config.size-1)
-            if nx != x and ny != y and (self.grid[nx, ny].type is None or self.grid[nx, ny].type != agent.type):
-                return [self.grid[nx, ny]]
+            if nx != x and ny != y and self.grid[nx, ny].type is not None and self.grid[nx, ny].type == agent.type and len(neighbors) < 1:
+                neighbors.append(self.grid[nx, ny])
+            if nx != x and ny != y and (self.grid[nx, ny].type is None or (self.grid[nx, ny].type != agent.type) and len(neighbors) > 1):
+                neighbors.append(self.grid[nx, ny])
+                return neighbors
         for dx in range(-self.config.radius, self.config.radius+1):
             for dy in range(-self.config.radius, self.config.radius+1):
                 if dx == 0 and dy == 0:
                     continue
                 nx = (x + dx) % self.config.size
                 ny = (y + dy) % self.config.size
-                if self.grid[nx, ny].type is None or self.grid[nx, ny].type != agent.type:
-                    neighbors.append(self.grid[nx, ny])
+                neighbors.append(self.grid[nx, ny])
         return neighbors
 
     def _interact(self, a1, a2):
@@ -103,6 +105,8 @@ class Simulation:
             neighbors = self._get_neighbors(agent)
             if neighbors:
                 partner = random.choice(neighbors)
+                while agent.type is not None and partner.type == agent.type:
+                    partner = random.choice(neighbors)
                 self._interact(agent, partner)
             # Update strategy
             new_strat = self.dynamic(agent, neighbors)

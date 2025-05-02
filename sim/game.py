@@ -103,15 +103,15 @@ class GameType(Enum):
             ('C', 'H'): (2, 2),
             ('C', 'U'): (0, 0),
             ('F', 'H'): (5, 5),
-            ('F', 'U'): (15, -5),
+            ('F', 'U'): (-5, 15),
             ('H', 'C'): (2, 2),
             ('U', 'C'): (0, 0),
             ('H', 'F'): (5, 5),
-            ('U', 'F'): (-5, 15)
+            ('U', 'F'): (15, -5)
         },
         strategies=[
-            Strategy("Always Cooperative", lambda h, t: 'C' if t == "Female" else 'H'),
-            Strategy("Always Uncooperative", lambda h, t: 'F' if t == "Female" else 'U')
+            Strategy("Always Cooperative", lambda h, t: 'F' if t == "Female" else 'H'),
+            Strategy("Always Uncooperative", lambda h, t: 'C' if t == "Female" else 'U')
         ],
         strategy_colors={
             "Always Cooperative": '#f1c40f',
