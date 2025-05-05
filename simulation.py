@@ -82,7 +82,7 @@ class Simulation:
             ny = random.randint(0, self.config.size-1)
             if nx != x and ny != y and self.grid[nx, ny].type is not None and self.grid[nx, ny].type == agent.type and len(neighbors) < 1:
                 neighbors.append(self.grid[nx, ny])
-            if nx != x and ny != y and (self.grid[nx, ny].type is None or (self.grid[nx, ny].type != agent.type) and len(neighbors) > 1):
+            if nx != x and ny != y and (self.grid[nx, ny].type is None or (self.grid[nx, ny].type != agent.type and len(neighbors) >= 1)):
                 neighbors.append(self.grid[nx, ny])
                 return neighbors
         for dx in range(-self.config.radius, self.config.radius+1):
