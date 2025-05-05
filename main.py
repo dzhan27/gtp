@@ -1,3 +1,9 @@
+'''
+main.py generates GUI and takes user input to set up initial game states
+and runs the simulation. It displlays the game state of the simulation
+through a heat diagram and a graph.
+'''
+
 import os
 import datetime
 import pandas as pd
