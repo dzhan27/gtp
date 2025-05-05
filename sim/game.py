@@ -27,7 +27,7 @@ class GameConfig:
     agent_types: List[str]
 
 class GameType(Enum):
-    
+    # prisoners dilema 
     PD = GameConfig(
         name="Prisoner's Dilemma",
         payoff_matrix={
@@ -50,7 +50,7 @@ class GameType(Enum):
         valid_actions=['C', 'D'],
         agent_types=None
     )
-
+    # stag hunt
     SH = GameConfig(
         name="Stag Hunt",
         payoff_matrix={
@@ -73,7 +73,7 @@ class GameType(Enum):
         valid_actions=['S', 'H'],
         agent_types=None
     )
-
+    # Hawk-Dove 
     HD = GameConfig(
         name="Hawk-Dove",
         payoff_matrix={
@@ -96,7 +96,7 @@ class GameType(Enum):
         valid_actions=['H', 'D'],
         agent_types=None
     )
-
+    # Battle of the Sexes
     BS = GameConfig(
         name="Battle of Sexes",
         payoff_matrix={
@@ -121,7 +121,7 @@ class GameType(Enum):
         valid_actions=['C', 'H', 'F', 'U'],
         agent_types=["Male", "Female"]
     )
-    
+    # Rock Paper Scissors
     RPS = GameConfig(
         name="Rock Paper Scissors",
         payoff_matrix={
@@ -148,7 +148,6 @@ class GameType(Enum):
             "Always Random": '#0e44ad'
             
         },
-        #default_distribution={"Always Rock": 0.25, "Always Paper": 0.25,"Always Scissor": 0.25},
         default_distribution={"Always Rock": 0.25, "Always Paper": 0.25,"Always Scissor": 0.25,"Always Random": 0.25 },
         valid_actions=['R', 'P', 'S'],
         agent_types=None
@@ -156,46 +155,3 @@ class GameType(Enum):
 
     def __str__(self):
         return self.value.name
-
-"""
-
-old code
-
-PAYOFF_MATRIX = {
-    GameType.PD: {
-        ('C', 'C'): (3, 3),
-        ('C', 'D'): (0, 5),
-        ('D', 'C'): (5, 0),
-        ('D', 'D'): (1, 1)
-    },
-    GameType.HD: {
-        ('H', 'H'): (0, 0),
-        ('H', 'D'): (4, 0),
-        ('D', 'H'): (0, 4),
-        ('D', 'D'): (2, 2)
-    },
-    GameType.SH: {
-        ('S', 'S'): (5, 5),
-        ('S', 'H'): (0, 3),
-        ('H', 'S'): (3, 0),
-        ('H', 'H'): (3, 3)
-    },
-    GameType.RPS: {
-        ('R', 'R'): (0, 0),
-        ('R', 'P'): (-1, 1),
-        ('R', 'S'): (1, -1),
-        ('P', 'R'): (1, -1),
-        ('P', 'P'): (0, 0),
-        ('P', 'S'): (-1, 1),
-        ('S', 'R'): (-1, 1),
-        ('S', 'P'): (1, -1),
-        ('S', 'S'): (0, 0)
-    },
-    GameType.BS: {
-        ('C', 'H'): (2, 2),
-        ('C', 'U'): (0, 0),
-        ('F', 'H'): (5, 5),
-        ('F', 'U'): (15, -5)
-    }
-}
-"""

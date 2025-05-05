@@ -1,3 +1,7 @@
+'''
+simulation.py contains methods neccesary for setting up and running the simulation
+of the game. This class sets up the game grid and update interactions between agents.
+'''
 import numpy as np
 from sim.game import GameType
 import random

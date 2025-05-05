@@ -1,3 +1,8 @@
+"""
+dynamics.py contains the definitions for the learning dynamics applied to eacj agent.
+These dynamics will affect the agent's startegy based on game state or randomly.
+"""
+
 import random
 import numpy as np
 

@@ -1,3 +1,7 @@
+"""
+agent.py contains the structure neccesary to assign attibures to each agent.
+"""
+
 class Agent:
     def __init__(self, strategy, position, gender=None):
         self.strategy = strategy

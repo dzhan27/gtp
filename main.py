@@ -15,6 +15,7 @@ from matplotlib.figure import Figure
 from sim.game import GameType
 import json
 
+# defines methods necessary for creating GUI
 class SimulationGUI:
     def __init__(self, master):
         self.master = master
@@ -39,7 +40,7 @@ class SimulationGUI:
         self.create_visualization()
 
         self.initialize_simulation()
-
+    # creates buttons/inputs for user interaction
     def create_controls(self):
         control_frame = ttk.Frame(self.master, padding=10)
         control_frame.grid(row=0, column=0, sticky="nsew")
@@ -128,10 +129,10 @@ class SimulationGUI:
         
         self.game_selector.bind('<<ComboboxSelected>>', self.on_game_change)
         self.dynamic_selector.bind('<<ComboboxSelected>>', self.on_dynamic_change)
-
+    # resets simulation when reset is prompted
     def on_dynamic_change(self, event):
         self.reset_simulation()
-
+    # allows user input to change granulairty of simulation based on radius size
     def apply_radius(self):
         try:
             new_radius = int(self.radius_entry.get())
@@ -146,7 +147,7 @@ class SimulationGUI:
         except ValueError as e:
             self.radius_status.config(text=str(e), foreground="red")
             self.master.after(3000, lambda: self.radius_status.config(text=""))
-
+    # allows user input to change the payoff matrix for each game  
     def update_payoff_controls(self):
         for widget in self.payoff_frame.winfo_children():
             if widget not in [self.btn_apply_payoff, self.payoff_status]:
@@ -189,7 +190,7 @@ class SimulationGUI:
                 p2_entry.bind("<KeyRelease>", lambda e: self.payoff_status.config(text=""))
                 
                 self.payoff_entries[key] = (p1_entry, p2_entry)
-
+    # applies custom payoff to game state
     def apply_custom_payoffs(self):
         try:
             new_matrix = {}
@@ -207,7 +208,7 @@ class SimulationGUI:
             
         except ValueError:
             self.payoff_status.config(text="Invalid input! Use integers.", foreground="red")
-
+     # allows user input to change the distribution of strategies amongs agent population  
     def update_strategy_distribution_controls(self):
         for widget in self.dist_frame.winfo_children():
             if widget not in [self.btn_apply_dist]:
@@ -230,7 +231,7 @@ class SimulationGUI:
             entry.pack(side=tk.RIGHT)
             
             self.strategy_entries[strat.name] = entry
-
+    # applies user inputted values for streategy distribution to the game state
     def apply_custom_distribution(self):
         try:
             dist = {}
@@ -253,14 +254,14 @@ class SimulationGUI:
             
         except ValueError as e:
             pass
-
+    # update the game state when a change is made to the game state configuration
     def on_game_change(self, event):
         selected_game = self.game_selector.get()
         self.current_game = next(gt for gt in GameType if gt.name == selected_game)
         self.update_strategy_distribution_controls()
         self.update_payoff_controls()
         self.reset_simulation()
-        
+    # creates the visual map of the population/simulation and the associated graph
     def create_visualization(self):
         vis_frame = ttk.Frame(self.master)
         vis_frame.grid(row=0, column=1, sticky="nsew")
@@ -299,7 +300,7 @@ class SimulationGUI:
         self.chart_ax.set_ylabel("Proportion")
         self.chart_ax.set_ylim(0, 1)
         self.chart_ax.grid(True)
-
+    # starts the simulation with the given game configurations
     def start_simulation(self):
         if not self.is_running:
             if not hasattr(self, 'current_iteration') or self.should_stop:
@@ -313,7 +314,7 @@ class SimulationGUI:
             self.current_game = next(gt for gt in GameType if gt.name == selected_game)
             
             self.master.after(100, self.run_simulation_loop)
-
+    # loop for each iteration of the simulation
     def run_simulation_loop(self):
         if not hasattr(self, 'current_iteration'):
             self.current_iteration = 0
@@ -355,7 +356,7 @@ class SimulationGUI:
         self.iteration_text.set_text(f'Iteration: {self.current_iteration}')
         
         self.master.after(50, self.run_simulation_loop)
-
+    # stop the iterations of the simulation
     def stop_simulation(self):
         self.should_stop = True
         self.is_running = False
@@ -366,13 +367,13 @@ class SimulationGUI:
         if self.save_data.get() and self.metrics:
             self.save_simulation_data()
             self.metrics = []  # clear metrics after saving
-        
+    # stops and resets the simulation to initial game state for current configurations    
     def reset_simulation(self):
         self.stop_simulation()
         self.initialize_simulation()
         self.current_iteration = 0
         self.update_grid()
-        
+    # initiatez the simulation based on the game configurations
     def initialize_simulation(self):
         game_config = self.current_game.value
         if hasattr(self, 'iteration_text'):
@@ -454,7 +455,7 @@ class SimulationGUI:
         
         self.chart_ax.legend(loc='upper right')
         self.chart_canvas.draw()
-
+    # updates the grid base don updated values for each agent/strategy after each iteration of the simulation
     def update_grid(self):
         game_config = self.current_game.value
         
@@ -492,7 +493,7 @@ class SimulationGUI:
             
             self.chart_ax.set_xlim(0, max(10, len(self.strategy_data[list(self.strategy_data.keys())[0]])))
             self.chart_canvas.draw_idle()
-
+    # saves the data of the simulation into a file in 'results' directory
     def save_simulation_data(self):
         # create output directory with timestamp
         date_str = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -524,7 +525,7 @@ class SimulationGUI:
         self.master.after(5000, lambda: self.save_status_label.config(text=""))
             
         print(f"Simulation data saved to {self.output_dir}")
-
+    # stops and closes simulation
     def on_closing(self):
         self.stop_simulation()
         self.master.destroy()
