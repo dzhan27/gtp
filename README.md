@@ -7,8 +7,8 @@ To run simulation, run the main.py program in terminal.
     - a GUI will be loaded with inputs for initial game state configurations
     - Select a game from the drop down menu then press "run" to start simulation
 
-Learning Dynamics, Interaction Radius, Strategy Distribution, and Payodd Matrix can
-be adjusted througg GUI inputs. In order to apply changes the current simulation must
+Learning Dynamics, Interaction Radius, Strategy Distribution, and Payoff Matrix can
+be adjusted through GUI inputs. In order to apply changes the current simulation must
 be stopped and reset to initial game state. All configurations must be applied before 
 running the new simulation.
 
